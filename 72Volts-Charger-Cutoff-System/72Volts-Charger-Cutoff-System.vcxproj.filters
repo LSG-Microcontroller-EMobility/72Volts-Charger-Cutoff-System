@@ -15,11 +15,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="__vm\.72VoltsBatteryHealthyCheck.vsarduino.h">
+    <ClInclude Include="__vm\.72Volts-Charger-Cutoff-System.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="72VoltsBatteryHealthyCheck.ino" />
+    <ClCompile Include="72Volts-Charger-Cutoff-System.ino" />
   </ItemGroup>
 </Project>
