@@ -10,16 +10,11 @@ int R3 = 2458;
 double R4 = 9928;
 int R5 = 6763;
 int R6 = 12100;
-
 float batteryVoltageValues[6] = {0.00,0.00,0.00,0.00,0.00,0.00};
-
 float singleBatteryVoltageValue[6] = { 0.00,0.00,0.00,0.00,0.00,0.00 };
-
 VoltageSensor* voltageSensor;
-
 RFWirelessTransmitter rFWirelessTransmitter(12, 50, 500);
 //char deviceId[2] = { 'B','I' };";
-
 void setup()
 {
 	Serial.begin(115200);
@@ -27,7 +22,6 @@ void setup()
 	digitalWrite(5, HIGH);
 	rFWirelessTransmitter.begin();
 }
-
 void loop()
 {
 	voltageSensorActivity(A0, "A0");
@@ -37,16 +31,13 @@ void loop()
 	voltageSensorActivity(A4, "A4");
 	voltageSensorActivity(A5, "A5");
 }
-
-void voltageSensorActivity(uint8_t analogicPort, char uid[2])
-{
+void voltageSensorActivity(uint8_t analogicPort, char uid[2]){
 	delay(100);
 	VoltageSensor* voltageSensor = new VoltageSensor(analogicPort, 4.80, 2.00, 5, uid);
 	voltageSensor->SetDigitalAlarmPinOut(13);
 	getBatteryLevels(*voltageSensor);
 	delete voltageSensor;
 }
-
 bool getBatteryLevels(VoltageSensor voltageSensor)
 {
 	Serial.print("Sensor UID "); Serial.print(voltageSensor.UID()); Serial.print(" : "); Serial.println(voltageSensor.GetSegnalValue());
@@ -129,7 +120,6 @@ bool getBatteryLevels(VoltageSensor voltageSensor)
 	}
 	sendMessage("BI", "A5", batteryVoltageValues[5]);
 }
-
 void checkBatteryVoltageLevel(VoltageSensor voltageSensor, float batteryVoltage,float voltageSingleBattery)
 {
 	if (batteryVoltage >= voltageSensor.GetMaxValue() || batteryVoltage < voltageSensor.GetMinValue())
@@ -143,14 +133,12 @@ void checkBatteryVoltageLevel(VoltageSensor voltageSensor, float batteryVoltage,
 		sendAlarmMessage("BI", voltageSensor.UID(), voltageSingleBattery);
 	}
 }
-
 void sendMessage(char deviceId[2], char sensorId[2], float voltageValue)
 {
 		rFWirelessTransmitter.startTrasmission(deviceId, sensorId, 1);
 		rFWirelessTransmitter.sendBufferData(deviceId,sensorId,"V", voltageValue, "0", "0");
 		rFWirelessTransmitter.endTrasmission(deviceId, sensorId);
 }
-
 void sendAlarmMessage(char deviceId[2], char sensorId[2], float voltageValue)
 {
 	return;
@@ -160,7 +148,6 @@ void sendAlarmMessage(char deviceId[2], char sensorId[2], float voltageValue)
 		rFWirelessTransmitter.endTrasmission(deviceId, sensorId);
 	} while (true);
 }
-
 float getBatteryVoltage(float partitionedVoltageBattery, double partitionResistor,double restitor1)
 {
 	Serial.println(restitor1);

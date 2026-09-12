@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.37614.0 d17.14
+VisualStudioVersion = 17.14.37614.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "72Volts-Charger-Cutoff-System", "72Volts-Charger-Cutoff-System\72Volts-Charger-Cutoff-System.vcxproj", "{6C5892E9-FF61-4ABD-9E00-0E1BDE7F2A8C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{3BADA2C9-7A2E-4206-8A8C-0F858D45BC8C}"
 	ProjectSection(SolutionItems) = preProject
-		CalcoloTensioni.txt = CalcoloTensioni.txt
+		Monitoraggio_Batterie_LiFePO4_ATmega328P.docx = Monitoraggio_Batterie_LiFePO4_ATmega328P.docx
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_library", "_library", "{3F0FCDD0-2620-4D45-B62E-2FC98532A0A3}"
