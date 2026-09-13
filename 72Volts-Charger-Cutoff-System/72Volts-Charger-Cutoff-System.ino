@@ -35,13 +35,11 @@ int R3 = 2458;
 double R4 = 9928;
 int R5 = 6763;
 int R6 = 12100;
-
 const uint8_t BATTERY_COUNT = 6;
 const uint8_t RELAY_PIN = 5;
 const uint8_t ANALOG_PORTS[BATTERY_COUNT] = { A0, A1, A2, A3, A4, A5 };
 const uint8_t SAMPLES_PER_CHANNEL = 16;
 const float VOLTAGE_REFERENCE = 5.00f;
-
 // Soglie originali: il minimo e' ammesso, il massimo fa scattare l'allarme.
 const float ADC_MIN_VOLTAGE = 2.00f;
 const float ADC_MAX_VOLTAGE = 4.80f;
@@ -51,42 +49,35 @@ const unsigned long READING_INTERVAL_MS = 250UL;
 const unsigned long ALARM_CONFIRM_TIME_MS = 500UL;
 const uint8_t REQUIRED_ALARM_READINGS = 3;
 const unsigned long DEBUG_INTERVAL_MS = 1000UL;
-
 const uint8_t ALARM_ADC_LOW = 1;
 const uint8_t ALARM_ADC_HIGH = 2;
 const uint8_t ALARM_BATTERY_LOW = 4;
 const uint8_t ALARM_BATTERY_HIGH = 8;
 const uint8_t ALARM_INVALID_READING = 16;
-
 float adcVoltageValues[BATTERY_COUNT] = {};
 float batteryVoltageValues[BATTERY_COUNT] = {};
 float singleBatteryVoltageValue[BATTERY_COUNT] = {};
 uint8_t batteryAlarmFlags[BATTERY_COUNT] = {};
 uint8_t alarmReadingCount[BATTERY_COUNT] = {};
 unsigned long alarmStartMs[BATTERY_COUNT] = {};
-
 bool hasMeasurements = false;
 bool relayTripped = false;
 unsigned long lastReadingStartMs = 0;
 unsigned long measurementTimeMs = 0;
-
 // Conserva il primo sgancio fino al riavvio, anche se le tensioni rientrano.
 uint8_t tripChannel = 0;
 uint8_t tripAlarmFlags = 0;
 float tripAdcVoltage = 0.0f;
 float tripBatteryVoltage = 0.0f;
 unsigned long tripTimeMs = 0;
-
 #if DEBUG_SERIAL
 unsigned long lastDebugMs = 0;
 bool hasPrintedMeasurements = false;
 #endif
-
 #if RF_ENABLED
 // Percorso RF precedente, escluso interamente quando RF_ENABLED vale 0.
 RFWirelessTransmitter rFWirelessTransmitter(12, 50, 500);
 #endif
-
 void getBatteryLevels();
 float readAnalogVoltage(uint8_t analogicPort);
 float getBatteryVoltage(float partitionedVoltageBattery, double partitionResistor, double resistor1);
@@ -99,7 +90,6 @@ void printConfirmedAlarm();
 void sendMessage(char deviceId[2], char sensorId[2], float voltageValue);
 void sendAlarmMessage(char deviceId[2], char sensorId[2], float voltageValue);
 #endif
-
 void setup() {
     DEBUG_SERIAL_BEGIN(115200);
     pinMode(RELAY_PIN, OUTPUT);
@@ -161,7 +151,6 @@ void loop() {
     }
 #endif
 }
-
 float readAnalogVoltage(uint8_t analogicPort) {
     // La prima conversione dopo il cambio di ingresso non entra nella media.
     analogRead(analogicPort);
@@ -172,7 +161,6 @@ float readAnalogVoltage(uint8_t analogicPort) {
     }
     return (static_cast<float>(sum) / SAMPLES_PER_CHANNEL) * VOLTAGE_REFERENCE / 1023.0f;
 }
-
 void getBatteryLevels() {
     // Nessuna stampa o comunicazione durante l'acquisizione delle sei prese.
     for (uint8_t channel = 0; channel < BATTERY_COUNT; ++channel) {
@@ -192,7 +180,6 @@ void getBatteryLevels() {
         singleBatteryVoltageValue[channel] = batteryVoltageValues[channel] - batteryVoltageValues[channel - 1];
     }
 }
-
 void checkBatteryVoltageLevels(unsigned long now) {
     for (uint8_t channel = 0; channel < BATTERY_COUNT; ++channel) {
         const float adcVoltage = adcVoltageValues[channel];
@@ -240,7 +227,6 @@ void checkBatteryVoltageLevels(unsigned long now) {
         }
     }
 }
-
 bool hasPendingAlarm() {
     if (relayTripped) {
         return false;
@@ -252,7 +238,6 @@ bool hasPendingAlarm() {
     }
     return false;
 }
-
 void printBatteryMeasurements() {
 #if DEBUG_SERIAL
     DEBUG_SERIAL_PRINT(F("t=")); DEBUG_SERIAL_PRINT(measurementTimeMs);
@@ -280,7 +265,6 @@ void printBatteryMeasurements() {
     }
 #endif
 }
-
 void printAlarmReason(uint8_t alarmFlags) {
 #if DEBUG_SERIAL
     if (alarmFlags == 0) DEBUG_SERIAL_PRINT(F("regolare"));
@@ -301,7 +285,6 @@ void printAlarmReason(uint8_t alarmFlags) {
     (void)alarmFlags;
 #endif
 }
-
 void printConfirmedAlarm() {
 #if DEBUG_SERIAL
     DEBUG_SERIAL_PRINT(F("SGANCIO CONFERMATO t=")); DEBUG_SERIAL_PRINT(tripTimeMs);
@@ -313,7 +296,6 @@ void printConfirmedAlarm() {
     DEBUG_SERIAL_PRINTLN(F("; rele' bloccato OFF fino al riavvio"));
 #endif
 }
-
 #if RF_ENABLED
 void sendMessage(char deviceId[2], char sensorId[2], float voltageValue) {
     rFWirelessTransmitter.startTrasmission(deviceId, sensorId, 1);
@@ -329,7 +311,6 @@ void sendAlarmMessage(char deviceId[2], char sensorId[2], float voltageValue) {
     } while (true);
 }
 #endif
-
 float getBatteryVoltage(float partitionedVoltageBattery, double partitionResistor, double resistor1) {
     return ((partitionedVoltageBattery * static_cast<float>(resistor1)) +
         (partitionedVoltageBattery * static_cast<float>(partitionResistor))) / static_cast<float>(partitionResistor);
