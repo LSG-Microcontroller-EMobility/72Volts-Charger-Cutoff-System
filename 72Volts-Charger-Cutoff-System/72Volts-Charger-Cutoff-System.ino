@@ -45,15 +45,14 @@ const uint8_t SAMPLES_PER_CHANNEL = 16;
 
 const float VOLTAGE_REFERENCE = 5.00f;
 
-// Soglie originali: il minimo e' ammesso, il massimo fa scattare l'allarme.
+// Soglie originali.
 const float ADC_MIN_VOLTAGE = 2.00f;
 const float ADC_MAX_VOLTAGE = 4.80f;
 const float BATTERY_MIN_VOLTAGE = 11.00f;
 const float BATTERY_MAX_VOLTAGE = 14.50f;
 
 const unsigned long READING_INTERVAL_MS = 250UL;
-const unsigned long ALARM_CONFIRM_TIME_MS = 500UL;
-const uint8_t REQUIRED_ALARM_READINGS = 3;
+const uint8_t REQUIRED_ALARM_READINGS = 10;
 const unsigned long DEBUG_INTERVAL_MS = 1000UL;
 
 const uint8_t ALARM_ADC_LOW = 1;
@@ -68,7 +67,6 @@ float single_battery_voltage_values[BATTERY_COUNT] = {};
 
 uint8_t battery_alarm_flags[BATTERY_COUNT] = {};
 uint8_t alarm_reading_count[BATTERY_COUNT] = {};
-unsigned long alarm_start_ms[BATTERY_COUNT] = {};
 
 bool has_measurements = false;
 bool relay_cutoff = false;
@@ -245,26 +243,26 @@ void check_battery_voltage_levels(unsigned long now) {
             continue;
         }
 
-        if (alarm_flags == 0) {
-            alarm_reading_count[channel] = 0;
-            alarm_start_ms[channel] = 0;
-            continue;
-        }
+        // Per lo sgancio contano esclusivamente le anomalie HIGH.
+        // Ogni batteria mantiene il proprio contatore indipendente.
+        const bool high_alarm =
+            (alarm_flags & ALARM_ADC_HIGH) ||
+            (alarm_flags & ALARM_BATTERY_HIGH);
 
-        if (alarm_reading_count[channel] == 0) {
-            alarm_start_ms[channel] = now;
+        // Una singola lettura non-HIGH interrompe la sequenza
+        // e azzera il contatore della batteria.
+        if (!high_alarm) {
+            alarm_reading_count[channel] = 0;
+            continue;
         }
 
         if (alarm_reading_count[channel] < REQUIRED_ALARM_READINGS) {
             ++alarm_reading_count[channel];
         }
 
-        // Conta anomalie consecutive dello stesso canale anche se alternano
-        // alto/basso. Una lettura completamente regolare azzera la conferma.
-        // Il conteggio da solo non basta: deve essere trascorso anche il tempo.
-        if (alarm_reading_count[channel] >= REQUIRED_ALARM_READINGS &&
-            now - alarm_start_ms[channel] >= ALARM_CONFIRM_TIME_MS) {
-
+        // Lo sgancio avviene esclusivamente dopo 10 letture HIGH
+        // consecutive sulla stessa batteria.
+        if (alarm_reading_count[channel] >= REQUIRED_ALARM_READINGS) {
             // Il rele' viene sganciato prima di qualsiasi stampa.
             digitalWrite(RELAY_PIN, LOW);
 
@@ -323,12 +321,6 @@ void print_battery_measurements() {
 
             DEBUG_SERIAL_PRINT(F("/"));
             DEBUG_SERIAL_PRINT(REQUIRED_ALARM_READINGS);
-
-            if (alarm_reading_count[channel] != 0) {
-                DEBUG_SERIAL_PRINT(F(" T="));
-                DEBUG_SERIAL_PRINT(measurement_time_ms - alarm_start_ms[channel]);
-                DEBUG_SERIAL_PRINT(F("ms"));
-            }
         }
 
         DEBUG_SERIAL_PRINTLN();
