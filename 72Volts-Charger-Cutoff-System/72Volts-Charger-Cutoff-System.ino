@@ -53,7 +53,7 @@ const float BATTERY_MAX_VOLTAGE = 14.50f;
 
 const unsigned long READING_INTERVAL_MS = 250UL;
 const unsigned long ALARM_CONFIRM_TIME_MS = 500UL;
-const uint8_t REQUIRED_ALARM_READINGS = 3;
+const uint8_t REQUIRED_ALARM_READINGS = 10;
 const unsigned long DEBUG_INTERVAL_MS = 1000UL;
 
 const uint8_t ALARM_ADC_LOW = 1;
