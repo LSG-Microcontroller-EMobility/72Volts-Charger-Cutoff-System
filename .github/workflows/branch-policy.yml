@@ -1,0 +1,57 @@
+name: Branch Policy
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'release/**'
+    types: [opened, reopened, synchronize, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-source-branch:
+    name: Validate source branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check source and target
+        shell: bash
+        env:
+          SOURCE_BRANCH: ${{ github.head_ref }}
+          TARGET_BRANCH: ${{ github.base_ref }}
+          SOURCE_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          TARGET_REPO: ${{ github.repository }}
+        run: |
+          if [[ "$SOURCE_REPO" != "$TARGET_REPO" ]]; then
+            echo "::error::Pull requests must originate from this repository."
+            exit 1
+          fi
+
+          case "$TARGET_BRANCH" in
+            main)
+              if [[ ! "$SOURCE_BRANCH" =~ ^release/.+ ]]; then
+                echo "::error::Only release/* may be merged into main."
+                exit 1
+              fi
+              ;;
+            release/*)
+              if [[ "$SOURCE_BRANCH" != "develop" ]]; then
+                echo "::error::Only develop may be merged into release branches."
+                exit 1
+              fi
+              ;;
+            develop)
+              if [[ ! "$SOURCE_BRANCH" =~ ^(feature|fix|bugfix|task|hotfix)/.+ ]]; then
+                echo "::error::Only feature/*, fix/*, bugfix/*, task/* or hotfix/* may be merged into develop."
+                exit 1
+              fi
+              ;;
+            *)
+              echo "::error::Unsupported target: $TARGET_BRANCH"
+              exit 1
+              ;;
+          esac
+
+          echo "Allowed pull request: $SOURCE_BRANCH -> $TARGET_BRANCH"
