@@ -1,0 +1,79 @@
+name: AVR Firmware CI
+on:
+  push:
+    branches: [develop, 'release/**']
+  pull_request:
+    branches: [develop, main, 'release/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  detect-sketch:
+    name: Detect AVR sketch
+    runs-on: ubuntu-latest
+    outputs:
+      present: ${{ steps.sketch.outputs.present }}
+    env:
+      GPM_SKETCH_PATH: "72Volts-Charger-Cutoff-System"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate sketch
+        id: sketch
+        shell: bash
+        run: |
+          if [[ ! -d "$GPM_SKETCH_PATH" ]]; then
+            echo 'present=false' >> "$GITHUB_OUTPUT"
+            echo "### Compilazione non eseguita: cartella sketch assente" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          mapfile -t sketches < <(find "$GPM_SKETCH_PATH" -maxdepth 1 -type f -name '*.ino')
+          if (( ${#sketches[@]} == 0 )); then
+            echo 'present=false' >> "$GITHUB_OUTPUT"
+            echo "### Compilazione non eseguita: nessun file .ino" >> "$GITHUB_STEP_SUMMARY"
+          elif (( ${#sketches[@]} > 1 )); then
+            echo "Multiple .ino files found in $GPM_SKETCH_PATH" >&2
+            exit 1
+          else
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+          fi
+  avr-build:
+    name: AVR firmware build
+    needs: detect-sketch
+    if: needs.detect-sketch.outputs.present == 'true'
+    runs-on: ubuntu-latest
+    env:
+      GPM_SKETCH_PATH: "72Volts-Charger-Cutoff-System"
+      GPM_FQBN: "arduino:avr:nano"
+      GPM_CORE: "arduino:avr"
+      GPM_CORE_URL: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install board core
+        shell: bash
+        run: |
+          if [[ -n "$GPM_CORE_URL" ]]; then
+            arduino-cli core update-index --additional-urls "$GPM_CORE_URL"
+            arduino-cli core install "$GPM_CORE" --additional-urls "$GPM_CORE_URL"
+          else
+            arduino-cli core update-index
+            arduino-cli core install "$GPM_CORE"
+          fi
+      - name: Generate CI version header
+        shell: bash
+        run: |
+          BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          VERSION="$(git rev-parse --short=7 HEAD)"
+          if [[ "$BRANCH" != main && "$BRANCH" != master ]]; then
+            VERSION+="*"
+          fi
+          if [[ -n "$(git status --porcelain --untracked-files=all)" ]]; then
+            if [[ "$BRANCH" == release/* ]]; then
+              echo "Release CI refuses uncommitted firmware changes" >&2
+              exit 1
+            fi
+            VERSION+="X"
+          fi
+          printf '#pragma once\n#define GIT_VERSION "%s"\n' "$VERSION" > "$GPM_SKETCH_PATH/GitVersion.generated.h"
+      - name: Compile AVR firmware
+        run: python3 .gpm/avr-ci.py "$GPM_FQBN" "$GPM_SKETCH_PATH"
